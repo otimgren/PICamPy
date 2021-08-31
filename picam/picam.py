@@ -1,93 +1,3 @@
-"""
-.. module: drivers/picam
-   :platform: Windows
-.. moduleauthor:: Daniel R. Dietze <daniel.dietze@berkeley.edu>
-
-Basic interface to Princeton Instrument's PICam library. It supports most of the standard features
-that are provided by PICam. I have decided not to implement a non-blocking version of the image
-acquisition in order to keep things clear and simple.
-
-Here is some example code showing the necessary parameters to get 1 kHz readout rates on a PIXIS100::
-
-    from picam import *
-
-    # initialize camera class and connect to library, look for available camera and connect to first one
-    cam = picam()
-    cam.loadLibrary()
-    cam.getAvailableCameras()
-    cam.connect()
-
-    # this will cool down CCD
-    cam.setParameter("SensorTemperatureSetPoint", -75)
-
-    # shortest expoure
-    cam.setParameter("ExposureTime", 0)
-
-    # readout mode
-    cam.setParameter("ReadoutControlMode", PicamReadoutControlMode["FullFrame"])
-
-    # custom chip settings
-    cam.setROI(0, 1340, 1, 0, 100, 100)
-    cam.setParameter("ActiveWidth", 1340)
-    cam.setParameter("ActiveHeight", 100)
-    cam.setParameter("ActiveLeftMargin", 0)
-    cam.setParameter("ActiveRightMargin", 0)
-    cam.setParameter("ActiveTopMargin", 8)
-    cam.setParameter("ActiveBottomMargin", 8)
-    cam.setParameter("VerticalShiftRate", 3.2)    # select fastest
-
-    # set logic out to not ready
-    cam.setParameter("OutputSignal", PicamOutputSignal["Busy"])
-
-    # shutter delays; open before trigger corresponds to shutter opening pre delay
-    cam.setParameter("ShutterTimingMode", PicamShutterTimingMode["Normal"])
-    cam.setParameter("ShutterClosingDelay", 0)
-
-    # sensor cleaning
-    cam.setParameter("CleanSectionFinalHeightCount", 1)
-    cam.setParameter("CleanSectionFinalHeight", 100)
-    cam.setParameter("CleanSerialRegister", False)
-    cam.setParameter("CleanCycleCount", 1)
-    cam.setParameter("CleanCycleHeight", 100)
-    cam.setParameter("CleanUntilTrigger", True)
-
-    # sensor gain settings
-    # according to manual, Pixis supports 100kHz and 2MHz; select fastest
-    cam.setParameter("AdcSpeed", 2.0)
-    cam.setParameter("AdcAnalogGain", PicamAdcAnalogGain["Low"])
-    cam.setParameter("AdcQuality", PicamAdcQuality["HighCapacity"])
-
-    # trigger and timing settings
-    cam.setParameter("TriggerDetermination", PicamTriggerDetermination["PositivePolarity"])
-    cam.setParameter("TriggerResponse", PicamTriggerResponse["ReadoutPerTrigger"])
-
-    # send configuration
-    cam.sendConfiguration()
-
-    # get readout speed
-    print("Estimated readout time = %f ms" % cam.getParameter("ReadoutTimeCalculation"))
-
-    cam.disconnect()
-    cam.unloadLibrary()
-
-..
-   This file is part of the pyFSRS app.
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-   Copyright 2014-2016 Daniel Dietze <daniel.dietze@berkeley.edu>.
-"""
 import os
 import ctypes
 import numpy as np
@@ -193,7 +103,7 @@ class picam():
         id_count = piint()
         self.status(self.lib.Picam_GetAvailableCameraIDs(ptr(self.camIDs), ptr(id_count)))
 
-        # if none are found, create a demo camera
+        # if none are found, create a demo camera (ProEM specifically)
         print("Available Cameras:")
         if id_count.value < 1:
             self.status(self.lib.Picam_DestroyCameraIDs(self.camIDs))
@@ -203,8 +113,8 @@ class picam():
             self.status(self.lib.Picam_GetAvailableDemoCameraModels(ptr(model_array), ptr(model_count)))
 
             model_ID = PicamCameraID()
-            serial = pichar("Demo Cam 1")
-            self.status(self.lib.Picam_ConnectDemoCamera(model_array[0], serial, ptr(model_ID)))
+            serial = ctypes.c_char_p()
+            self.status(self.lib.Picam_ConnectDemoCamera(piint(PicamModel["ProEM512BExcelon"]), serial, ptr(model_ID)))
             self.camIDs = [model_ID]
 
             self.status(self.lib.Picam_DestroyModels(model_array))
@@ -337,7 +247,8 @@ class picam():
     # get / set parameters
     # name is a string specifying the parameter
     def getParameter(self, name):
-        """Reads and returns the value of the parameter with given name. If there is no parameter of this name, the function returns None and prints a warning.
+        """Reads and returns the value of the parameter with given name. If there is no parameter of this name,
+         the function returns None and prints a warning.
 
         :param str name: Name of the parameter exactly as stated in the PICam SDK manual.
         :returns: Value of this parameter with data type corresponding to the type of parameter.
@@ -413,7 +324,8 @@ class picam():
         return None
 
     def setParameter(self, name, value):
-        """Set parameter. The value is automatically typecast to the correct data type corresponding to the type of parameter.
+        """Set parameter. The value is automatically typecast to the correct data type corresponding to the type of 
+        parameter.
 
         .. note:: Setting a parameter with this function does not automatically change the configuration in the camera. In order to apply all changes, :py:func:`sendConfiguration` has to be called.
 
@@ -550,10 +462,13 @@ class picam():
     # N = number of frames
     # timeout = max wait time between frames in ms
     def readNFrames(self, N=1, timeout=100):
-        """This function acquires N frames using Picam_Acquire. It waits till all frames have been collected before it returns.
+        """This function acquires N frames using Picam_Acquire. It waits till all frames have been collected 
+        before it returns.
 
-        :param int N: Number of frames to collect (>= 1, default=1). This number is essentially limited by the available memory.
-        :param float timeout: Maximum wait time between frames in milliseconds (default=100). This parameter is important when using external triggering.
+        :param int N: Number of frames to collect (>= 1, default=1). This number is essentially limited by the 
+                      available memory.
+        :param float timeout: Maximum wait time between frames in milliseconds (default=100). This parameter is 
+                              important when using external triggering.
         :returns: List of acquired frames.
         """
         available = PicamAvailableData()
@@ -590,11 +505,12 @@ class picam():
         """
         # get number of pixels contained in a single readout and a single frame
         # parameters are bytes, a pixel in resulting array is 2 bytes
-        readoutstride = self.getParameter("ReadoutStride") / 2
-        framestride = self.getParameter("FrameStride") / 2
+        readoutstride = int(self.getParameter("ReadoutStride") / 2)
+        framestride = int(self.getParameter("FrameStride") / 2)
         frames = self.getParameter("FramesPerReadout")
 
         # create a pointer to data
+        print(readoutstride)
         dataArrayType = pi16u * readoutstride * size
         dataArrayPointerType = ctypes.POINTER(dataArrayType)
         dataPointer = ctypes.cast(address, dataArrayPointerType)
@@ -614,63 +530,3 @@ class picam():
         for i, r in enumerate(self.ROIS):
             out.append(data[:, r[2]:r[0] * r[1] + r[2]])
         return out
-
-if __name__ == '__main__':
-
-    cam = picam()
-    cam.loadLibrary()
-    cam.getAvailableCameras()
-    cam.connect()
-
-    # cool down CCD
-    cam.setParameter("SensorTemperatureSetPoint", -75)
-
-    # shortest expoure
-    cam.setParameter("ExposureTime", 0)
-
-    # readout mode
-    cam.setParameter("ReadoutControlMode", PicamReadoutControlMode["FullFrame"])
-
-    # custom chip settings
-    cam.setROI(0, 1340, 1, 0, 100, 100)
-    cam.setParameter("ActiveWidth", 1340)
-    cam.setParameter("ActiveHeight", 100)
-    cam.setParameter("ActiveLeftMargin", 0)
-    cam.setParameter("ActiveRightMargin", 0)
-    cam.setParameter("ActiveTopMargin", 8)
-    cam.setParameter("ActiveBottomMargin", 8)
-    cam.setParameter("VerticalShiftRate", 3.2)    # select fastest
-
-    # set logic out to not ready
-    cam.setParameter("OutputSignal", PicamOutputSignal["Busy"])
-
-    # shutter delays; open before trigger corresponds to shutter opening pre delay
-    cam.setParameter("ShutterTimingMode", PicamShutterTimingMode["Normal"])
-    cam.setParameter("ShutterClosingDelay", 0)
-
-    # sensor cleaning
-    cam.setParameter("CleanSectionFinalHeightCount", 1)
-    cam.setParameter("CleanSectionFinalHeight", 100)
-    cam.setParameter("CleanSerialRegister", False)
-    cam.setParameter("CleanCycleCount", 1)
-    cam.setParameter("CleanCycleHeight", 100)
-    cam.setParameter("CleanUntilTrigger", True)
-
-    # sensor gain settings
-    # according to manual, Pixis supports 100kHz and 2MHz; select fastest
-    cam.setParameter("AdcSpeed", 2.0)
-    cam.setParameter("AdcAnalogGain", PicamAdcAnalogGain["Low"])
-    cam.setParameter("AdcQuality", PicamAdcQuality["HighCapacity"])
-
-    # trigger and timing settings
-    cam.setParameter("TriggerDetermination", PicamTriggerDetermination["PositivePolarity"])
-    cam.setParameter("TriggerResponse", PicamTriggerResponse["ReadoutPerTrigger"])
-
-    # send configuration
-    cam.sendConfiguration()
-
-    # get readout speed
-    print("Estimated readout time = %f ms") % cam.getParameter("ReadoutTimeCalculation")
-
-    cam.disconnect()
-    cam.unloadLibrary()

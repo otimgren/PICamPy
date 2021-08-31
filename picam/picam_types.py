@@ -24,6 +24,10 @@ Defines data types and enums to be used with picam. See PICam user manual for mo
    Copyright 2014-2016 Daniel Dietze <daniel.dietze@berkeley.edu>.
 """
 import ctypes
+from collections import defaultdict
+
+def missing_key():
+    return "Key is missing"
 
 # +++++++ simple data types +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # data types - use these for communication with the picam library!
@@ -504,7 +508,7 @@ PicamParameter = {
     "DisableCoolingFan": PI_V("Boolean", "Collection", 29),
     "EnableSensorWindowHeater": PI_V("Boolean", "Collection", 127)
 }
-PicamParameterLookup = dict(zip(PicamParameter.values(), PicamParameter.keys()))
+PicamParameterLookup = defaultdict(missing_key, zip(PicamParameter.values(), PicamParameter.keys()))
 
 PicamAdcAnalogGain = {
     "Low": 1,
