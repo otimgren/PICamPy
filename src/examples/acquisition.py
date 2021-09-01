@@ -1,6 +1,6 @@
 # Import the packages for picam
-from picam import *
-from picam_types import *
+from picam import PICam
+from picam.picam_types import PicamReadoutControlMode
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
@@ -21,6 +21,7 @@ try:
     # cam.printAvailableParameters()
 
     # Set parameters
+    cam.setParameter("ExposureTime", 10) # Exposure time in ms
     cam.setParameter("ReadoutControlMode", PicamReadoutControlMode["FullFrame"])
 
     # Apply settings

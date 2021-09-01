@@ -1,7 +1,7 @@
 import os
 import ctypes
 import numpy as np
-from picam_types import *
+from .picam_types import *
 
 
 # ##########################################################################################################
@@ -14,7 +14,7 @@ def ptr(x):
 
 # ##########################################################################################################
 # Camera Class
-class picam():
+class PICam():
     """Main class that handles all connectivity with library and cameras.
     """
     # +++++++++++ CONSTRUCTION / DESTRUCTION ++++++++++++++++++++++++++++++++++++++++++++
@@ -89,10 +89,12 @@ class picam():
 
     # returns a list of camera IDs that are connected to the computer
     # if no physical camera is found, a demo camera is initialized - for debug only
-    def getAvailableCameras(self):
-        """Queries a list of IDs of cameras that are connected to the computer and prints some sensor information for each camera to stdout.
+    def getAvailableCameras(self, demo = False):
+        """
+        Queries a list of IDs of cameras that are connected to the computer and prints some sensor information for each camera to stdout.
+        If no cameras are found, raise an exception
 
-        If no physical camera is found, a demo camera is initialized - *for debug only*.
+        If demo=True, a demo camera is initialized - *for debug only*.
         """
         if self.camIDs is not None and not isinstance(self.camIDs, list):
             self.status(self.lib.Picam_DestroyCameraIDs(self.camIDs))
@@ -103,9 +105,10 @@ class picam():
         id_count = piint()
         self.status(self.lib.Picam_GetAvailableCameraIDs(ptr(self.camIDs), ptr(id_count)))
 
-        # if none are found, create a demo camera (ProEM specifically)
+        
         print("Available Cameras:")
-        if id_count.value < 1:
+        # If want to use a virtual demo camera, initialize one
+        if demo:
             self.status(self.lib.Picam_DestroyCameraIDs(self.camIDs))
 
             model_array = ptr(piint())
@@ -119,11 +122,17 @@ class picam():
 
             self.status(self.lib.Picam_DestroyModels(model_array))
 
-            print('  Model is ', PicamModelLookup[model_ID.model])
+            print('  DemoCamera Model is ', PicamModelLookup[model_ID.model])
             print('  Computer interface is ', PicamComputerInterfaceLookup[model_ID.computer_interface])
             print('  Sensor_name is ', model_ID.sensor_name)
             print('  Serial number is', model_ID.serial_number)
             print('\n')
+
+        # if no cameras are found, raise an error
+        elif id_count.value < 1:
+            print("  None")
+            raise AssertionError('No Princeton Instruments camera attached.')
+
         else:
             for i in range(id_count.value):
                 print('  Model is ', PicamModelLookup[self.camIDs[i].model])
