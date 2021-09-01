@@ -19,4 +19,5 @@ You should have received a copy of the GNU General Public License
 along with these programs.  If not, see <http://www.gnu.org/licenses/>.
 
 Copyright 2010, 2015 Daniel Dietze <daniel.dietze@berkeley.edu>.
+
 Copyright 2021 Oskari Timgren <oskari.timgren@gmail.com>
