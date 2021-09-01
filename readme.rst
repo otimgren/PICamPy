@@ -2,7 +2,7 @@
 =====================================================================================
 PICamPy is a Python wrapper for the Teledyne Princeton Instrments PICam drivers based on ddietze's original repo. This fork is mostly updating the code to be compatible with Python3.
 
-Licence
+License
 =======
 
 These programs are free software: you can redistribute and/or modify 
