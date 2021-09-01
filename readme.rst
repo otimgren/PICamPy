@@ -1,4 +1,4 @@
-*PICamPy* - Python package for controlling Teledyne Princeton Instruments cameras
+**PICamPy** - Python package for controlling Teledyne Princeton Instruments cameras
 =====================================================================================
 PICamPy is a Python wrapper for the Teledyne Princeton Instrments PICam drivers based on ddietze's original repo. This fork is mostly updating the code to be compatible with Python3.
 
@@ -19,3 +19,4 @@ You should have received a copy of the GNU General Public License
 along with these programs.  If not, see <http://www.gnu.org/licenses/>.
 
 Copyright 2010, 2015 Daniel Dietze <daniel.dietze@berkeley.edu>.
+Copyright 2021 Oskari Timgren <oskari.timgren@gmail.com>
