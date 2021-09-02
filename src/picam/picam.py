@@ -519,7 +519,6 @@ class PICam():
         frames = self.getParameter("FramesPerReadout")
 
         # create a pointer to data
-        print(readoutstride)
         dataArrayType = pi16u * readoutstride * size
         dataArrayPointerType = ctypes.POINTER(dataArrayType)
         dataPointer = ctypes.cast(address, dataArrayPointerType)
@@ -543,7 +542,7 @@ class PICam():
 
 if __name__ == '__main__':
 
-    cam = picam()
+    cam = PICam()
     cam.loadLibrary()
     cam.getAvailableCameras()
     cam.connect()
