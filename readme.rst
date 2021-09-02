@@ -1,32 +1,8 @@
-*Py-Hardware-Support* - A collection of python modules for common laboratory hardware
+**PICamPy** - Python package for controlling Teledyne Princeton Instruments cameras
 =====================================================================================
+PICamPy is a Python wrapper for the Teledyne Princeton Instrments PICam drivers based on ddietze's original repo. This fork is mostly updating the code to be compatible with Python3.
 
-Here's a small collection of some python modules that can be used to add hardware support to your programs. 
-I have written those to be easy to use, but they are not necessarily covering all the functionality the 
-library or device has to offer. 
-
-Currently included hardware:
-   * Princeton Instruments PICam library
-   * Ophir's USBI interface for power meters
-   * Thorlabs' uc480 CCD and CMOS cameras
-
-As I am browsing through my old code, I will constantly be adding more modules / hardware to this repository.
-
-How to use these modules
-========================
-
-In order to use one of these modules in your own scripts, simply copy the respective folder 
-somewhere into your project tree where python is looking for modules and use standard module import. 
-Examples are given for each module.
-
-Documentation
-=============
-
-A more extensive documentation of the python modules can be found on my GitHub Pages: 
-
-http://ddietze.github.io/Py-Hardware-Support
-   
-Licence
+License
 =======
 
 These programs are free software: you can redistribute and/or modify 
@@ -43,3 +19,5 @@ You should have received a copy of the GNU General Public License
 along with these programs.  If not, see <http://www.gnu.org/licenses/>.
 
 Copyright 2010, 2015 Daniel Dietze <daniel.dietze@berkeley.edu>.
+
+Copyright 2021 Oskari Timgren <oskari.timgren@gmail.com>
